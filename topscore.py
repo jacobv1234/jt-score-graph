@@ -1,10 +1,13 @@
 from json import loads
 import matplotlib.pyplot as plt
 import matplotlib.dates as md
+import matplotlib.colors as mcol
+from matplotlib.collections import LineCollection
 import matplotlib as mpl
 from datetime import datetime
+from random import choice
 
-from score import Score
+from timesortedscore import Score
 
 # load data
 scores = []
@@ -15,22 +18,59 @@ with open('data.json','r') as f:
 
 # do calculations on data
 scores.sort()
-mintime = scores[0].time
-maxtime = scores[0].time
-for score in scores:
-    if score.time < mintime:
-        mintime = score.time
-    if score.time > maxtime:
-        maxtime = score.time
-    
-[score.calc_colour(mintime,maxtime) for score in scores]
 
-# create graph
+possibleUsers = []
+for score in scores:
+    if score.name not in possibleUsers:
+        possibleUsers.append(score.name)
+
+# assign colours
+colours = {}
+used_colours = []
+css_colour_list = list(mcol.CSS4_COLORS.keys())
+for user in possibleUsers:
+    # pick a colour
+    while True:
+        col = choice(css_colour_list)
+        if col not in used_colours:
+            break
+    used_colours.append(col)
+    colours[user] = col
+
+print(colours)
+
+# create graph data
+x = [md.date2num(datetime.fromtimestamp(score.time/1000)) for score in scores]
+y = [score.score for score in scores]
+c = [colours[score.name] for score in scores]
+
+# line needs to be split into individual sections to show colours properly
+segments = []
+for i in range(len(x) - 2):
+    segments.append([(x[i], y[i]), (x[i+1], y[i+1])])
+
+print(segments)
+
+lines = LineCollection(segments, colors = c[1:], linewidth=2)
+
+
+
 fig, ax = plt.subplots()
 dateformat = md.DateFormatter('%d/%m @ %H:%M:%S')
 ax.xaxis.set_major_formatter(dateformat)
-ax.plot([md.date2num(datetime.fromtimestamp(score.time/1000)) for score in scores],
-        [score.score for score in scores])
+
+# scatter plot for individual points per colour so the legend works
+for user in possibleUsers:
+    ux = [md.date2num(datetime.fromtimestamp(score.time/1000)) for score in scores if score.name == user]
+    uy = [score.score for score in scores if score.name == user]
+    c = colours[user]
+    ax.scatter(ux,uy,15,c,label=user)
+
+plt.legend()
+
+# add line graph
+ax.add_collection(lines)
+ax.autoscale()
 
 ax.set_xlabel('Time')
 ax.set_ylabel('Score')
