@@ -43,15 +43,22 @@ print(colours)
 x = [md.date2num(datetime.fromtimestamp(score.time/1000)) for score in scores]
 y = [score.score for score in scores]
 c = [colours[score.name] for score in scores]
+sc = []
 
 # line needs to be split into individual sections to show colours properly
 segments = []
 for i in range(len(x) - 2):
-    segments.append([(x[i], y[i]), (x[i+1], y[i+1])])
+    # straight line segments
+    #segments.append([(x[i], y[i]), (x[i+1], y[i+1])])
+    #sc.append(c[i+1])
 
-print(segments)
+    # square line segments
+    segments.append([(x[i], y[i]), (x[i+1], y[i])])
+    sc.append(c[i])
+    segments.append([(x[i+1], y[i]), (x[i+1], y[i+1])])
+    sc.append(c[i+1])
 
-lines = LineCollection(segments, colors = c[1:], linewidth=2)
+lines = LineCollection(segments, colors = sc, linewidth=2)
 
 
 
@@ -64,7 +71,7 @@ for user in possibleUsers:
     ux = [md.date2num(datetime.fromtimestamp(score.time/1000)) for score in scores if score.name == user]
     uy = [score.score for score in scores if score.name == user]
     c = colours[user]
-    ax.scatter(ux,uy,15,c,label=user)
+    ax.scatter(ux,uy,25,c,label=user)
 
 plt.legend()
 
